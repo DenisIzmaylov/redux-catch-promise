@@ -170,11 +170,6 @@ class ProjectsList extends Component {
 
 `projects-list-actions.js`
 ```javascript
-import assign from 'object-assign';
-import logger from '../../logger';
-const moduleLogger = logger.child({
-  module: 'schemasServiceActions'
-});
 import {
   PROJECTS_LIST_UPDATE
 } from './action-types';
@@ -184,7 +179,11 @@ export default function fetch (className, force) {
     if (__BROWSER__) {
       try {
         const data = await fetch('/api/projects', {
-          method: 'GET'
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
         });
         const body = await data.json();
       } catch(err) {
@@ -200,7 +199,7 @@ export default function fetch (className, force) {
       const projectsCollection = pmongo.collection('projects');
       try {
         const cursor = await projectsCollection.find({});
-        result = cursor.toArray();
+        const result = cursor.toArray();
         dispatch({
           type: PROJECTS_LIST_UPDATE,
           state: result
