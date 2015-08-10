@@ -75,6 +75,18 @@ app.use(function *(next) {
 });
 ```
 
+`client.js`
+```javascript
+import 'isomorphic-fetch';
+import React from 'react';
+import Application from './application';
+
+const state = (window._sharedData && window._sharedData['state']) || {};
+const rootElement = document.getElementById('root');
+
+React.render(<Application state={state} />, rootElement);
+```
+
 `application.js`
 ```javascript
 import React, { Component, PropTypes } from 'react';
@@ -92,14 +104,18 @@ export default class Application extends Component {
   constructor(props, context) {
     super(props, context);
     const { serverSideRendering } = props;
-    const createStoreWithMiddleware = applyMiddleware(
-      thunk,
-      (typeof serverSideRendering === 'object') ?
+    const middlewares = [
+      thunk
+    ];
+    if (typeof serverSideRendering === 'object') {
+      middlewares.push(
         catchPromise((promisedAction, action, store) => {
           serverSideRendering.preparePromises.push(promisedAction);
           serverSideRendering.sharedState = store.getState();
-        }) : undefined
-    )(createStore);
+        })
+      );
+    }
+    const createStoreWithMiddleware = applyMiddleware(middlewares)(createStore);
     const allReducers = combineReducers(reducers);
     const store = createStoreWithMiddleware(allReducers, props.state || {});
     if (typeof serverSideRendering === 'object') {
