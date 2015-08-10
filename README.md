@@ -3,7 +3,7 @@ redux-catch-promise
 
 Redux [middleware](https://github.com/gaearon/redux/blob/master/docs/middleware.md) to catch promises from functions processed by [redux-thunk](https://github.com/gaearon/redux-thunk/).
 
-Extremely useful for server-side rendering components with asynchronous loaded state. See [example below](#server-side-rendering).
+Extremely useful for server-side rendering React components with asynchronous loaded state. See [example below](#react-server-side-rendering).
 
 ## Usage
 
@@ -32,9 +32,9 @@ const createStoreWithMiddleware = applyMiddleware(
 const store = createStoreWithMiddleware(reducer);
 ```
 
-### Server-Side Rendering
+## React Server-Side Rendering
 
-It's a short demo with `koa` and [koa-router](https://github.com/alexmingoia/koa-router) to implement server-side rendering of your application with async state:
+It's a short demo with `koa` to implement server-side rendering of your component with async-loaded state:
 
 `server.js`
 ```javascript
