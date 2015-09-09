@@ -1,19 +1,99 @@
 redux-catch-promise
 ===================
 
-Redux [middleware](https://github.com/gaearon/redux/blob/master/docs/middleware.md) to catch promises from functions processed by [redux-thunk](https://github.com/gaearon/redux-thunk/).
+Async thunk [middleware](http://rackt.github.io/redux/docs/advanced/Middleware.html) for Redux. Write your async actions in a few lines. 
 
-Extremely useful for server-side rendering React components with asynchronous loaded state. See [example below](#react-server-side-rendering).
+Extremely useful for server-side rendering React components with asynchronous loaded state. See [example below](#server-side-rendering-with-async-state).
 
-## Usage
+## What’s a thunk?!
 
-`redux-thunk` middleware allows you to write action creators that return a thunk instead of an action. The thunk can be used to delay the dispatch of an action, or to dispatch only if a certain condition is met. But in this way you could not get control if your action returns Promises and async functions. `redux-catch-promise` solves this.
+A thunk is a function that wraps an expression to delay its evaluation.
 
-To enable `redux-catch-promise` use `applyMiddleware()`:
+```javascript
+// calculation of 1 + 2 is immediate
+// x === 3
+let x = 1 + 2;
 
-```js
-import { createStore, applyMiddleware, combineReducers } from 'redux';
+// calculation of 1 + 2 is delayed
+// foo can be called later to perform the calculation
+// foo is a thunk!
+let foo = () => 1 + 2;
+```
+
+## Motivation
+
+`redux-catch-promise` middleware allows you to write action creators that return sync or async functions instead of an action. The thunk can be used to delay the dispatch of an action, or to dispatch only if a certain condition is met. The inner function receives the store methods dispatch and getState() as parameters.
+
+An action creator that returns an async functions to perform asynchronous dispatch:
+```javascript
+const SHOW_USER_LOCATION = 'SHOW_USER_LOCATION';
+
+function showUserLocation(location) {
+  return {
+    type: SHOW_USER_LOCATION,
+    location
+  };
+}
+
+function requestUserLocation(userName) {
+  return dispatch => async function () {
+    const finalURL = 'https://api.github.com/users/' + userName;
+    const response = await fetch(URL, {
+      method: 'POST'
+    });
+    const data = await response.json();
+    showUserLocation(data['location']);
+  };
+}
+```
+
+## Installation
+
+
+### Upgrade `redux-thunk` to `redux-catch-promise`
+
+If you use `redux-thunk` to enable async actions in a way above you have to replace `redux-thunk` to `redux-catch-promise`.
+
+Just do it in 3 steps:
+
+1) ```npm install redux-catch-promise --save```
+2) Replace import declaration:
+```javascript
 import thunk from 'redux-thunk';
+```
+to
+```javascript
+import CatchPromise from 'redux-catch-promise';
+```
+3) Replace middleware assignment, i.e:
+```javascript
+const createStoreWithMiddleware = applyMiddleware(thunk)(createStore);
+```
+to 
+```javascript
+const actionPromises = [];
+const catchPromise = CatchPromise();
+const createStoreWithMiddleware = applyMiddleware(catchPromise)(createStore);
+```
+
+### Clean install
+
+1) ```npm install redux-catch-promise --save```
+2) Add import declaration:
+```javascript
+import CatchPromise from 'redux-catch-promise';
+```
+3) Add middleware assignment, i.e:
+```javascript
+const actionPromises = [];
+const catchPromise = CatchPromise();
+const createStoreWithMiddleware = applyMiddleware(catchPromise)(createStore);
+```
+
+## Server-side Rendering with async state
+
+```javascript
+import { createStore, applyMiddleware, combineReducers } from 'redux';
 import catchPromise from 'redux-catch-promise';
 import * as reducers from './reducers/index';
 
@@ -32,9 +112,9 @@ const createStoreWithMiddleware = applyMiddleware(
 const store = createStoreWithMiddleware(reducer);
 ```
 
-## React Server-Side Rendering
+## Server-side rendering with async state
 
-It's a short demo with `koa` to implement server-side rendering of your component with async-loaded state:
+It's a short demo how to implement with this middleware server-side rendering of your React components with async-loading state:
 
 `server.js`
 ```javascript
@@ -92,8 +172,9 @@ React.render(<Application state={state} />, rootElement);
 import React, { Component, PropTypes } from 'react';
 import { combineReducers, createStore, applyMiddleware } from 'redux';
 import thunk from 'redux-thunk';
-import catchPromise from 'redux-catch-promise';
-import ProjectsList from './projects-list';
+import CatchPromise from 'redux-catch-promise';
+import ReposList from './repos-list';
+import reposListReducer from './repos-list/reducer';
 
 export default class Application extends Component {
   static propTypes = {
@@ -104,19 +185,16 @@ export default class Application extends Component {
   constructor(props, context) {
     super(props, context);
     const { serverSideRendering } = props;
-    const middlewares = [
-      thunk
-    ];
-    if (typeof serverSideRendering === 'object') {
-      middlewares.push(
-        catchPromise((promisedAction, action, store) => {
+    const catchPromise = CatchPromise(
+      (typeof serverSideRendering === 'object') &&
+        (promisedAction, action, store) => {
           serverSideRendering.preparePromises.push(promisedAction);
           serverSideRendering.sharedState = store.getState();
-        })
-      );
-    }
-    const createStoreWithMiddleware = applyMiddleware(middlewares)(createStore);
-    const allReducers = combineReducers(reducers);
+        });
+    const createStoreWithMiddleware = applyMiddleware(catchPromise)(createStore);
+    const allReducers = combineReducers({
+      repostList: repostListReducer
+    });
     const store = createStoreWithMiddleware(allReducers, props.state || {});
     if (typeof serverSideRendering === 'object') {
       // callback to dispatch passed actions
@@ -134,29 +212,29 @@ export default class Application extends Component {
   
   renderChild() {
     return (
-      <ProjectsList prepare={this.prepare} />
+      <ReposList prepare={this.prepare} />
     );
   }
 }
 ```
 
-`projects-list.js`
+`repos-list/index.js`
 ```javascript
 import React, { Component, PropTypes } from 'react';
 import { bindActionCreators, connect } from 'react-redux';
-import * as projectsListActions from './projects-list-actions';
+import * as projectsListActions from './actions';
 
 function selector(state) {
   return {
-    projectsList: state.projectsList
+    reposList: state.reposList
   };
 }
 
-class ProjectsList extends Component {
+class ReposList extends Component {
   constructor(props, context) {
     super(props, context);
     this.prepareActions = [
-      projectsListActions.fetch()
+      reposListActions.fetch()
     ];
     if (typeof props.prepare === 'function') {
       props.prepare(this.prepareActions);
@@ -164,18 +242,17 @@ class ProjectsList extends Component {
   }
   
   render() {
-    const { projectsList } = this.props;
+    const { reposList } = this.props;
     return (
       <ul>
-        {Array.isArray(projectsList.items) ?
-          projectsList.items.map((it) => <li>{it.name}</li>) :
-          <li>No projects</li>}
+        {Array.isArray(reposList.items) ?
+          reposList.items.map((it) => <li>{it['name']}</li>) :
+          <li>Empty</li>}
       </ul>
     );
   }
   
   componentDidMount() {
-    // React will not call this method by server-side rendering
     if (this.prepareDataActions) {
       const props = this.props;
       this.prepareDataActions.forEach((action) => props.dispatch(action));
@@ -184,49 +261,58 @@ class ProjectsList extends Component {
 }
 ```
 
-`projects-list-actions.js`
+`repos-list/action-types.js`
+```javascript
+export default {
+  UPDATE: 'REPOS_LIST_UPDATE'
+};
+```
+
+`repos-list/actions.js`
 ```javascript
 import {
-  PROJECTS_LIST_UPDATE
+  UPDATE
 } from './action-types';
 
 export default function fetch (className, force) {
   return async (dispatch, getState) => {
-    if (__BROWSER__) {
-      try {
-        const data = await fetch('/api/projects', {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-        });
-        const body = await data.json();
-      } catch(err) {
-        console.error(err);
-      }
-      dispatch({
-        type: PROJECTS_LIST_UPDATE,
-        state: body
-      });
+    try {
+      const data = await fetch('http://api.github.com/users/DenisIzmaylov/repos');
+      const items = await data.json();
+    } catch(err) {
+      console.error(err);
     }
-    if (__SERVER__) {
-      const pmongo = require('pmongo');
-      const projectsCollection = pmongo.collection('projects');
-      try {
-        const cursor = await projectsCollection.find({});
-        const result = cursor.toArray();
-        dispatch({
-          type: PROJECTS_LIST_UPDATE,
-          state: result
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    }
+    dispatch({
+      type: UPDATE,
+      state: { items }
+    });
   }
 }
 ```
+
+`repos-list/reducer.js`
+```javascript
+import {
+  UPDATE
+} from './action-types';
+
+const initialState = {
+  items: {}
+};
+
+export default function (state = initialState, action = {}) {
+  switch (action.type) {
+    case UPDATE:
+      return [action.state, ...state];
+    default:
+      return state;
+  }
+}
+```
+
+## Thanks 
+
+* [redux-thunk](https://github.com/gaearon/redux-thunk/) for inspiration
 
 ## License
 

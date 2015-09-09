@@ -1,11 +1,22 @@
-export default function catchPromise(callback) {
+export default function CatchPromise(callback) {
   return (store) => (next) => (action) => {
     const { dispatch, getState } = store;
-    if (typeof action === 'object' && typeof action.then === 'function') {
+    
+    if (typeof action === 'function') {
+      const result = action(dispatch, getState);
+
       if (typeof callback === 'function') {
-        callback(result, action, store);
+        const isPromise =
+          (typeof result === 'object' &&
+            typeof result.then === 'function');
+        
+        if (isPromise) {
+          callback(result, action, store);
+        }
       }
+      return result;
     }
+    
     return next(action);
   };
 }
