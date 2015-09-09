@@ -1,7 +1,7 @@
 redux-catch-promise
 ===================
 
-Async thunk [middleware](http://rackt.github.io/redux/docs/advanced/Middleware.html) for Redux. Write your async actions in a few lines. 
+Extended replacement for `redux-thunk` [middleware](http://rackt.github.io/redux/docs/advanced/Middleware.html) for Redux with supporting async functions.
 
 Extremely useful for server-side rendering React components with asynchronous loaded state. See [example below](#server-side-rendering-with-async-state).
 
@@ -88,21 +88,19 @@ const catchPromise = CatchPromise();
 const createStoreWithMiddleware = applyMiddleware(catchPromise)(createStore);
 ```
 
-## Server-side Rendering with async state
+## How to catch dispatched promises and async functions
 
 ```javascript
 import { createStore, applyMiddleware, combineReducers } from 'redux';
-import catchPromise from 'redux-catch-promise';
+import CatchPromise from 'redux-catch-promise';
 import * as reducers from './reducers/index';
 
 const reducer = combineReducers(reducers);
 
-// create a store that has redux-thunk middleware enabled
 const actionPromises = [];
 const createStoreWithMiddleware = applyMiddleware(
-  thunk,
-  catchPromise((promisedAction, action, store) => {
-    // it calls only when a Promise found
+  CatchPromise((promisedAction, action, store) => {
+    // it willbe called only when a Promise dispatched
     actionPromises.push(promisedAction);
   }
 )(createStore);
