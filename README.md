@@ -59,7 +59,7 @@ To enable async actions in a way above you have to replace `redux-thunk` to `red
 ```javascript
 import thunk from 'redux-thunk';
 ```
-to
+  should be replaced to:
 ```javascript
 import CatchPromise from 'redux-catch-promise';
 ```
@@ -67,7 +67,7 @@ import CatchPromise from 'redux-catch-promise';
 ```javascript
 const createStoreWithMiddleware = applyMiddleware(thunk)(createStore);
 ```
-to 
+  should be replaced to:
 ```javascript
 const actionPromises = [];
 const catchPromise = CatchPromise();
