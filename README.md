@@ -52,12 +52,10 @@ function requestUserLocation(userName) {
 
 ### Upgrade `redux-thunk` to `redux-catch-promise`
 
-If you use `redux-thunk` to enable async actions in a way above you have to replace `redux-thunk` to `redux-catch-promise`.
+To enable async actions in a way above you have to replace `redux-thunk` to `redux-catch-promise`. Just do it in 3 steps:
 
-Just do it in 3 steps:
-
-1) ```npm install redux-catch-promise --save```
-2) Replace import declaration:
+* ```npm install redux-catch-promise --save```
+* Replace import declaration:
 ```javascript
 import thunk from 'redux-thunk';
 ```
@@ -65,7 +63,7 @@ to
 ```javascript
 import CatchPromise from 'redux-catch-promise';
 ```
-3) Replace middleware assignment, i.e:
+* Replace middleware assignment, i.e:
 ```javascript
 const createStoreWithMiddleware = applyMiddleware(thunk)(createStore);
 ```
@@ -76,14 +74,14 @@ const catchPromise = CatchPromise();
 const createStoreWithMiddleware = applyMiddleware(catchPromise)(createStore);
 ```
 
-### Clean install
+### Clean installation
 
-1) ```npm install redux-catch-promise --save```
-2) Add import declaration:
+* ```npm install redux-catch-promise --save```
+* Add import declaration:
 ```javascript
 import CatchPromise from 'redux-catch-promise';
 ```
-3) Add middleware assignment, i.e:
+* Add middleware assignment, i.e:
 ```javascript
 const actionPromises = [];
 const catchPromise = CatchPromise();
