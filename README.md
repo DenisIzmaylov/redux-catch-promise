@@ -1,7 +1,7 @@
 redux-catch-promise
 ===================
 
-Extended replacement for `redux-thunk` [middleware](http://rackt.github.io/redux/docs/advanced/Middleware.html) for Redux with supporting async functions.
+Extended replacement for `redux-thunk` [middleware](http://rackt.github.io/redux/docs/advanced/Middleware.html) to supporting async functions.
 
 Useful for server-side rendering React components with asynchronous loaded state. See [example below](#server-side-rendering-with-async-state).
 
