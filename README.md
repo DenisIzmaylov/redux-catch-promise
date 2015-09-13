@@ -40,7 +40,8 @@ function requestUserLocation(userName) {
       method: 'POST'
     });
     const data = await response.json();
-    showUserLocation(data['location']);
+    const action = showUserLocation(data['location']);
+    dispatch(action);
   };
 }
 ```
