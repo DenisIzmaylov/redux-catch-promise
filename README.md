@@ -1,7 +1,7 @@
 redux-catch-promise
 ===================
 
-Extended replacement of `redux-thunk` [middleware](http://rackt.github.io/redux/docs/advanced/Middleware.html) to supporting async-await functions and implement server-side rendering for React components with asynchronous state. See [example below](#server-side-rendering-with-async-state).
+Extended replacement of `redux-thunk` [middleware](http://rackt.github.io/redux/docs/advanced/Middleware.html) to supporting [async-await](https://babeljs.io/docs/plugins/transform-async-to-generator/) functions and implement server-side rendering for React components with asynchronous state. See [example below](#server-side-rendering-with-async-state).
 
 ## What’s a thunk?!
 
